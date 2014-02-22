@@ -19,6 +19,7 @@ class OpenExchangeRatesClient(object):
     """
     BASE_URL = 'http://openexchangerates.org/api'
     ENDPOINT_LATEST = BASE_URL + '/latest.json'
+    ENDPOINT_HISTORICAL = BASE_URL + '/historical/%s.json'   # %s is the date in YYYY-MM-DD format
     ENDPOINT_CURRENCIES = BASE_URL + '/currencies.json'
 
     def __init__(self, api_key):
@@ -78,3 +79,33 @@ class OpenExchangeRatesClient(object):
             raise OpenExchangeRatesClientException(e)
 
         return resp.json()
+
+    def historical(self, date):
+        """Fetches historical exchange rate data from service.
+
+        The argument `date` must be a datetime.date object.
+
+        :Example Data:
+            {
+                disclaimer: "<Disclaimer data>",
+                license: "<License data>",
+                timestamp: 1358150409,
+                base: "USD",
+                rates: {
+                    AED: 3.666311,
+                    AFN: 51.2281,
+                    ALL: 104.748751,
+                    AMD: 406.919999,
+                    ANG: 1.7831,
+                    ...
+                }
+            }
+        """
+        try:
+            endpoint = self.ENDPOINT_HISTORICAL % date.isoformat()
+            resp = self.client.get(endpoint)
+            resp.raise_for_status()
+        except requests.exceptions.RequestException, e:
+            raise OpenExchangeRatesClientException(e)
+        return resp.json(parse_int=decimal.Decimal,
+                         parse_float=decimal.Decimal)
